@@ -20,10 +20,10 @@ spring:
         time-between-eviction-runs: 10s
   jackson:
     default-property-inclusion: non_null # JSON?????????
-#mybatis-plus:
-#  type-aliases-package: com.hmdp.entity # ?????
-#logging:
-#  level:
-#    com.hmdp: debug
-#  pattern:
-#    dateformat: mm:ss.SSS
+mybatis-plus:
+  type-aliases-package: com.hmdp.entity # ?????
+logging:
+  level:
+    com.hmdp: debug
+  pattern:
+    dateformat: mm:ss.SSS
