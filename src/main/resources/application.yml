@@ -19,11 +19,11 @@ spring:
         min-idle: 1
         time-between-eviction-runs: 10s
   jackson:
-    default-property-inclusion: non_null # JSON?????????
+    default-property-inclusion: non_null # JSON忽略非空字段
 mybatis-plus:
-  type-aliases-package: com.hmdp.entity # ?????
+  type-aliases-package: com.yhy.blackhorsereview.entity # 别名扫描包
 logging:
   level:
-    com.hmdp: debug
+    com.yhy.blackhorsereview: debug
   pattern:
     dateformat: mm:ss.SSS
