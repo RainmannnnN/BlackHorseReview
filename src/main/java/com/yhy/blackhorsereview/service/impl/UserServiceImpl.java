@@ -12,6 +12,7 @@ import com.yhy.blackhorsereview.entity.User;
 import com.yhy.blackhorsereview.mapper.UserMapper;
 import com.yhy.blackhorsereview.service.IUserService;
 import com.yhy.blackhorsereview.utils.RegexUtils;
+import com.yhy.blackhorsereview.utils.UserHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -103,8 +104,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     @Override
     public Result logout() {
-        //stringRedisTemplate.delete(LOGIN_USER_KEY + token);
-        return null;
+        // 这里相当于把所有的LOGIN_KEY都删除了，正常来说后面应该加上该User的token的,但不知道怎么拿到token
+        stringRedisTemplate.delete(LOGIN_USER_KEY);
+        return Result.ok();
     }
 
     private User createUserWithPhone(String phone) {
