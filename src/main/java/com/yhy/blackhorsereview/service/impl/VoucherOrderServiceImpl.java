@@ -9,6 +9,7 @@ import com.yhy.blackhorsereview.service.ISeckillVoucherService;
 import com.yhy.blackhorsereview.service.IVoucherOrderService;
 import com.yhy.blackhorsereview.utils.RedisIdWorker;
 import com.yhy.blackhorsereview.utils.UserHolder;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +34,6 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
     private RedisIdWorker redisIdWorker;
 
     @Override
-    @Transactional
     public Result seckillVoucher(Long voucherId) {
         // 查询优惠券
         SeckillVoucher voucher = seckillVoucherService.getById(voucherId);
@@ -50,6 +50,26 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         if (stock < 1) {
             return Result.fail("优惠券库存不足！");
         }
+        // 获取锁
+        Long userId = UserHolder.getUser().getId();
+        synchronized (userId.toString().intern()) {
+            // 获取与事务有关的代理对象，要用到aspectj
+            IVoucherOrderService proxy = (IVoucherOrderService) AopContext.currentProxy();
+            return proxy.createVoucherOrder(voucherId);
+        }
+
+    }
+
+    @Transactional
+    public Result createVoucherOrder(Long voucherId){
+        // 实现一人一单
+        Long userId = UserHolder.getUser().getId();
+        Integer count = query().eq("user_id", userId).eq("voucher_id", voucherId).count();
+        if (count > 0) {
+            // 用户已经下过单了
+            return Result.fail("每个用户限一次！");
+        }
+
         // 扣减库存
         boolean success = seckillVoucherService.update()
                 .setSql("stock = stock - 1")
@@ -58,6 +78,7 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         if (!success) {
             return Result.fail("优惠券库存不足！");
         }
+
         //创建订单
         VoucherOrder voucherOrder = new VoucherOrder();
         // 生成订单号
@@ -65,9 +86,11 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         voucherOrder.setId(orderId);
         voucherOrder.setVoucherId(voucherId);
         // 设置用户id
-        Long userId = UserHolder.getUser().getId();
+
         voucherOrder.setUserId(userId);
         save(voucherOrder);
         return Result.ok(orderId);
+
+
     }
 }
