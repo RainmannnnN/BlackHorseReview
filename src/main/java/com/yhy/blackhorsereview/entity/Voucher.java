@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 
 /**
  * <p>
- * 
+ *
  * </p>
  *
  * @author 虎哥
@@ -65,6 +65,8 @@ public class Voucher implements Serializable {
 
     /**
      * 优惠券类型
+     * 0是普通券
+     * 1是秒杀券
      */
     private Integer type;
 

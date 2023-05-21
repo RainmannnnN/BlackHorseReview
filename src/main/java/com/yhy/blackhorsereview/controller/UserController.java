@@ -4,7 +4,6 @@ package com.yhy.blackhorsereview.controller;
 import com.yhy.blackhorsereview.dto.LoginFormDTO;
 import com.yhy.blackhorsereview.dto.Result;
 import com.yhy.blackhorsereview.dto.UserDTO;
-import com.yhy.blackhorsereview.entity.User;
 import com.yhy.blackhorsereview.entity.UserInfo;
 import com.yhy.blackhorsereview.service.IUserInfoService;
 import com.yhy.blackhorsereview.service.IUserService;
@@ -13,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpSession;
 
 /**
  * <p>
