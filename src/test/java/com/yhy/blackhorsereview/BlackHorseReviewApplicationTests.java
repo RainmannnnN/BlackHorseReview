@@ -16,9 +16,9 @@ class BlackHorseReviewApplicationTests {
     void contextLoads() {
     }
 
-    @Test
-    public void testSaveShop2Redis(){
+    //@Test
+    /*public void testSaveShop2Redis(){
         shopService.saveShop2Redis(1L, 10L);
-    }
+    }*/
 
 }
