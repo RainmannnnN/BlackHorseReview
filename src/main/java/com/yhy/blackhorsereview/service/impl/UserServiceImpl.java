@@ -103,9 +103,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     }
 
     @Override
-    public Result logout() {
-        // 这里相当于把所有的LOGIN_KEY都删除了，正常来说后面应该加上该User的token的,但不知道怎么拿到token
-        stringRedisTemplate.delete(LOGIN_USER_KEY);
+    public Result logout(String token) {
+        stringRedisTemplate.delete(LOGIN_USER_KEY + token);
         return Result.ok();
     }
 
