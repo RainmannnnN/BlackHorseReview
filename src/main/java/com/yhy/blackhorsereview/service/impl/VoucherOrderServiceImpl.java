@@ -8,8 +8,10 @@ import com.yhy.blackhorsereview.mapper.VoucherOrderMapper;
 import com.yhy.blackhorsereview.service.ISeckillVoucherService;
 import com.yhy.blackhorsereview.service.IVoucherOrderService;
 import com.yhy.blackhorsereview.utils.RedisIdWorker;
+import com.yhy.blackhorsereview.utils.SimpleRedisLock;
 import com.yhy.blackhorsereview.utils.UserHolder;
 import org.springframework.aop.framework.AopContext;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +35,9 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
     @Resource
     private RedisIdWorker redisIdWorker;
 
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
+
     @Override
     public Result seckillVoucher(Long voucherId) {
         // 查询优惠券
@@ -50,13 +55,24 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         if (stock < 1) {
             return Result.fail("优惠券库存不足！");
         }
-        // 获取锁
+        // 获取锁对象
         Long userId = UserHolder.getUser().getId();
-        synchronized (userId.toString().intern()) {
+        SimpleRedisLock lock = new SimpleRedisLock("order:" + userId, stringRedisTemplate);
+        boolean isLock = lock.tryLock(1200);
+        // 判断是否获取锁成功
+        if (!isLock) {
+            return Result.fail("一个人只能下一单！");
+        }
+        try{
             // 获取与事务有关的代理对象，要用到aspectj
             IVoucherOrderService proxy = (IVoucherOrderService) AopContext.currentProxy();
             return proxy.createVoucherOrder(voucherId);
+        } finally {
+            // 释放锁
+            lock.unlock();
         }
+
+
 
     }
 
