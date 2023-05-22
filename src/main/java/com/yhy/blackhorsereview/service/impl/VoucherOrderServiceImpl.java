@@ -1,6 +1,7 @@
 package com.yhy.blackhorsereview.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.yhy.blackhorsereview.config.RedissonConfig;
 import com.yhy.blackhorsereview.dto.Result;
 import com.yhy.blackhorsereview.entity.SeckillVoucher;
 import com.yhy.blackhorsereview.entity.VoucherOrder;
@@ -10,6 +11,8 @@ import com.yhy.blackhorsereview.service.IVoucherOrderService;
 import com.yhy.blackhorsereview.utils.RedisIdWorker;
 import com.yhy.blackhorsereview.utils.SimpleRedisLock;
 import com.yhy.blackhorsereview.utils.UserHolder;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -38,6 +41,9 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
+    @Resource
+    private RedissonClient redissonClient;
+
     @Override
     public Result seckillVoucher(Long voucherId) {
         // 查询优惠券
@@ -57,8 +63,9 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         }
         // 获取锁对象
         Long userId = UserHolder.getUser().getId();
-        SimpleRedisLock lock = new SimpleRedisLock("order:" + userId, stringRedisTemplate);
-        boolean isLock = lock.tryLock(1200);
+        //SimpleRedisLock lock = new SimpleRedisLock("order:" + userId, stringRedisTemplate);
+        RLock rLock = redissonClient.getLock("lock:order:" + userId);
+        boolean isLock = rLock.tryLock();
         // 判断是否获取锁成功
         if (!isLock) {
             return Result.fail("一个人只能下一单！");
@@ -69,7 +76,7 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
             return proxy.createVoucherOrder(voucherId);
         } finally {
             // 释放锁
-            lock.unlock();
+            rLock.unlock();
         }
 
 
