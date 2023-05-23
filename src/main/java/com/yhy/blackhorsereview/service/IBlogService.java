@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.yhy.blackhorsereview.dto.Result;
 import com.yhy.blackhorsereview.entity.Blog;
 
+import java.util.List;
+
 /**
  * <p>
  *  服务类
@@ -21,4 +23,13 @@ public interface IBlogService extends IService<Blog> {
     Result likeBlog(Long id);
 
     Result queryBlogLikes(Long id);
+
+    /**
+     * 查询用户的关注列表
+     * @param lastId
+     * @return
+     */
+    List<Blog> getBlogsOfFollow(Long lastId);
+
+    Result saveBlog(Blog blog);
 }

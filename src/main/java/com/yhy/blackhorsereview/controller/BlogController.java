@@ -10,6 +10,7 @@ import com.yhy.blackhorsereview.service.IBlogService;
 import com.yhy.blackhorsereview.service.IUserService;
 import com.yhy.blackhorsereview.utils.SystemConstants;
 import com.yhy.blackhorsereview.utils.UserHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -20,11 +21,12 @@ import java.util.List;
  * 前端控制器
  * </p>
  *
- * @author 虎哥
- * @since 2021-12-22
+ * @author yhy
+ * @since 2023-5-23
  */
 @RestController
 @RequestMapping("/blog")
+@Slf4j
 public class BlogController {
 
     @Resource
@@ -34,13 +36,8 @@ public class BlogController {
 
     @PostMapping
     public Result saveBlog(@RequestBody Blog blog) {
-        // 获取登录用户
-        UserDTO user = UserHolder.getUser();
-        blog.setUserId(user.getId());
-        // 保存探店博文
-        blogService.save(blog);
-        // 返回id
-        return Result.ok(blog.getId());
+
+        return blogService.saveBlog(blog);
     }
 
     @PutMapping("/like/{id}")
@@ -82,6 +79,17 @@ public class BlogController {
         Page<Blog> page = blogService.query().eq("user_id", id).page(new Page<>(current, SystemConstants.MAX_PAGE_SIZE));
         List<Blog> records = page.getRecords();
         return Result.ok(records);
+    }
+
+    @GetMapping("/of/follow")
+    public Result getBlogsOfFollow(@RequestParam("lastId") Long lastId) {
+        // TODO 获取用户关注信息
+        List<Blog> blogs = blogService.getBlogsOfFollow(lastId);
+
+        // TODO 这里返回的应该是List<Blog>的集合
+        log.debug("功能尚未完成0.0");
+        // return Result.ok(blogs);
+        return Result.fail("功能未完成！");
     }
 
 }

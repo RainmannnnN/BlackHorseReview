@@ -7,9 +7,11 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.yhy.blackhorsereview.dto.Result;
 import com.yhy.blackhorsereview.dto.UserDTO;
 import com.yhy.blackhorsereview.entity.Blog;
+import com.yhy.blackhorsereview.entity.Follow;
 import com.yhy.blackhorsereview.entity.User;
 import com.yhy.blackhorsereview.mapper.BlogMapper;
 import com.yhy.blackhorsereview.service.IBlogService;
+import com.yhy.blackhorsereview.service.IFollowService;
 import com.yhy.blackhorsereview.service.IUserService;
 import com.yhy.blackhorsereview.utils.RedisConstants;
 import com.yhy.blackhorsereview.utils.SystemConstants;
@@ -41,6 +43,12 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+
+    @Resource
+    private IBlogService blogService;
+
+    @Resource
+    private IFollowService followService;
 
     @Override
     public Result queryBlogById(Long id) {
@@ -127,6 +135,35 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
         ).collect(Collectors.toList());
         // 返回
         return Result.ok(userDTOS);
+    }
+
+    @Override
+    public List<Blog> getBlogsOfFollow(Long lastId) {
+        return null;
+    }
+
+    @Override
+    public Result saveBlog(Blog blog) {
+        // 获取登录用户
+        UserDTO user = UserHolder.getUser();
+        blog.setUserId(user.getId());
+        // 保存探店博文
+        boolean save = save(blog);
+        // 查询博客的粉丝
+        if (!save) {
+            return Result.fail("新增笔记失败！");
+        }
+        // 把博客发送给粉丝
+        // 查询表中所有关注该作者的用户
+        List<Follow> follows = followService.query().eq("follow_user_id", user.getId()).list();
+        // 推送
+        for (Follow follow : follows) {
+            Long userId = follow.getUserId();
+            String key = "feed:" + userId;
+            stringRedisTemplate.opsForZSet().add(key, blog.getId().toString(), System.currentTimeMillis());
+        }
+        // 返回id
+        return Result.ok(blog.getId());
     }
 
     private void queryBlogUser(Blog blog) {
