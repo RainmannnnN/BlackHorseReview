@@ -96,7 +96,7 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
                     // 3.创建订单
                     createVoucherOrder(voucherOrder);
                     // 4.确认消息 XACK
-                    stringRedisTemplate.opsForStream().acknowledge("s1", "g1", record.getId());
+                    stringRedisTemplate.opsForStream().acknowledge("stream.orders", "g1", record.getId());
                 } catch (Exception e) {
                     log.error("处理订单异常", e);
                     handlePendingList();
@@ -115,7 +115,7 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
                     );
                     // 2.判断订单信息是否为空
                     if (list == null || list.isEmpty()) {
-                        // 如果为null，说明没有异常消息，结束循环
+                        // 如果为null，说明pending-list没有异常消息，结束循环
                         break;
                     }
                     // 解析数据
@@ -125,9 +125,10 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
                     // 3.创建订单
                     createVoucherOrder(voucherOrder);
                     // 4.确认消息 XACK
-                    stringRedisTemplate.opsForStream().acknowledge("s1", "g1", record.getId());
+                    //  "stream.orders" 原本是 "s1"
+                    stringRedisTemplate.opsForStream().acknowledge("stream.orders", "g1", record.getId());
                 } catch (Exception e) {
-                    log.error("处理订单异常", e);
+                    log.error("处理pending-list订单异常", e);
                 }
             }
         }
@@ -176,10 +177,13 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         }
     }
 
+    private IVoucherOrderService proxy;
+
     @Override
     public Result seckillVoucher(Long voucherId) {
         // 获取用户
         Long userId = UserHolder.getUser().getId();
+        // 获取订单id
         long orderId = redisIdWorker.nextId("order");
         // 1.执行lua脚本
         Long result = stringRedisTemplate.execute(
@@ -194,6 +198,8 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
             // 不为0则代表没有购买资格
             return Result.fail(r == 1 ? "库存不足" : "不能重复下单");
         }
+        // TODO 获取代理对象
+        proxy = (IVoucherOrderService) AopContext.currentProxy();
         // 3.返回订单id
         return Result.ok(orderId);
     }
