@@ -1,9 +1,11 @@
 package com.yhy.blackhorsereview.controller;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import com.yhy.blackhorsereview.dto.LoginFormDTO;
 import com.yhy.blackhorsereview.dto.Result;
 import com.yhy.blackhorsereview.dto.UserDTO;
+import com.yhy.blackhorsereview.entity.User;
 import com.yhy.blackhorsereview.entity.UserInfo;
 import com.yhy.blackhorsereview.service.IUserInfoService;
 import com.yhy.blackhorsereview.service.IUserService;
@@ -81,4 +83,17 @@ public class UserController {
         // 返回
         return Result.ok(info);
     }
+
+    @GetMapping("/{id}")
+    public Result queryUserById(@PathVariable("id") Long userId){
+        User user = userService.getById(userId);
+        if (user == null) {
+            return Result.ok();
+        }
+        UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
+        return Result.ok(userDTO);
+    }
+
+
+
 }
