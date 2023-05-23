@@ -24,12 +24,13 @@ public interface IBlogService extends IService<Blog> {
 
     Result queryBlogLikes(Long id);
 
-    /**
-     * 查询用户的关注列表
-     * @param lastId
-     * @return
-     */
-    List<Blog> getBlogsOfFollow(Long lastId);
-
     Result saveBlog(Blog blog);
+
+    /**
+     * 查询关注列表发送的博客
+     * @param max 上一次查询的最小时间戳
+     * @param offset 偏移量
+     * @return ScrollResult对象
+     */
+    Result getBlogsOfFollow(Long max, Integer offset);
 }

@@ -82,14 +82,10 @@ public class BlogController {
     }
 
     @GetMapping("/of/follow")
-    public Result getBlogsOfFollow(@RequestParam("lastId") Long lastId) {
-        // TODO 获取用户关注信息
-        List<Blog> blogs = blogService.getBlogsOfFollow(lastId);
+    public Result getBlogsOfFollow(@RequestParam("lastId") Long max, @RequestParam(value = "offset", defaultValue = "0") Integer offset) {
 
-        // TODO 这里返回的应该是List<Blog>的集合
-        log.debug("功能尚未完成0.0");
-        // return Result.ok(blogs);
-        return Result.fail("功能未完成！");
+        return blogService.getBlogsOfFollow(max, offset);
+
     }
 
 }
