@@ -19,7 +19,29 @@ public interface IUserService extends IService<User> {
 
     Result sendCode(String phone);
 
+    /**
+     * 用户登录
+     * @param loginForm 登录表单
+     * @return
+     */
     Result login(LoginFormDTO loginForm);
 
+    /**
+     * 用户退出
+     * @param token 保存的token
+     * @return
+     */
     Result logout(String token);
+
+    /**
+     * 实现签到功能,这个功能用postman测试
+     * @return
+     */
+    Result sign();
+
+    /**
+     * 统计连续签到,这个功能用postman测试
+     * @return
+     */
+    Result signCount();
 }

@@ -15,12 +15,15 @@ import com.yhy.blackhorsereview.utils.RegexUtils;
 import com.yhy.blackhorsereview.utils.UserHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.connection.BitFieldSubCommands;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpSession;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -106,6 +109,59 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     public Result logout(String token) {
         stringRedisTemplate.delete(LOGIN_USER_KEY + token);
         return Result.ok();
+    }
+
+    @Override
+    public Result sign() {
+        // 获取当前用户
+        Long userId = UserHolder.getUser().getId();
+        // 获取日期
+        LocalDateTime now = LocalDateTime.now();
+        // 拼接key
+        String keySuffix = now.format(DateTimeFormatter.ofPattern(":yyyyMM"));
+        String key = USER_SIGN_KEY + userId + keySuffix;
+        // 获取今天是本月的第几天
+        int dayOfMonth = now.getDayOfMonth();
+        // 写入redis
+        stringRedisTemplate.opsForValue().setBit(key, dayOfMonth - 1, true);
+        return Result.ok();
+    }
+
+    @Override
+    public Result signCount() {
+        // 获取当前用户
+        Long userId = UserHolder.getUser().getId();
+        // 获取日期
+        LocalDateTime now = LocalDateTime.now();
+        // 拼接key
+        String keySuffix = now.format(DateTimeFormatter.ofPattern(":yyyyMM"));
+        String key = USER_SIGN_KEY + userId + keySuffix;
+        // 获取今天是本月的第几天
+        int dayOfMonth = now.getDayOfMonth();
+        // 获取本月截至今天为止的所有签到记录，返回一个十进制的数字
+        List<Long> result = stringRedisTemplate.opsForValue().bitField(
+                key,
+                BitFieldSubCommands.create().get(BitFieldSubCommands.BitFieldType.unsigned(dayOfMonth)).valueAt(0)
+        );
+        if(result == null || result.isEmpty()){
+            return Result.ok(0);
+        }
+        Long num = result.get(0);
+        if(num == null || num == 0){
+            return Result.ok(0);
+        }
+        int count = 0; // 计数器
+        while(true){
+            // 和1做与运算，统计签到次数
+            if((num & 1) == 0){
+                // 为0说明没签到，直接退出
+                break;
+            }
+            count++;
+            num >>>= 1;
+        }
+        return Result.ok(count);
+
     }
 
     private User createUserWithPhone(String phone) {
